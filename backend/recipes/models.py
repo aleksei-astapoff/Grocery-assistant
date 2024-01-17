@@ -6,16 +6,19 @@ from django.dispatch import receiver
 
 User = get_user_model()
 
+MAX_LENGTH_CHAR_FIELD = 200
+MAX_LENGTH_COLOR = 7
+
 
 class Ingredient(models.Model):
     name = models.CharField(
         'Название ингредиента',
-        max_length=200,
+        max_length=MAX_LENGTH_CHAR_FIELD,
     )
     measurement_unit = models.CharField(
         'Единица измерения',
         blank=True,
-        max_length=200,
+        max_length=MAX_LENGTH_CHAR_FIELD,
     )
 
     class Meta:
@@ -30,15 +33,15 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     name = models.CharField(
         'Имя',
-        max_length=200,
+        max_length=MAX_LENGTH_CHAR_FIELD,
     )
     color = models.CharField(
         'Цвет',
-        max_length=7,
+        max_length=MAX_LENGTH_COLOR,
     )
     slug = models.SlugField(
         'Ссылка',
-        max_length=200,
+        max_length=MAX_LENGTH_CHAR_FIELD,
         unique=True,
     )
 
@@ -60,7 +63,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         'Название рецепта',
-        max_length=200)
+        max_length=MAX_LENGTH_CHAR_FIELD)
     image = models.ImageField(
         'Изображение рецепта',
         upload_to='static/recipe/',
