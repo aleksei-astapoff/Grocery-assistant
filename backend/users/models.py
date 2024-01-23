@@ -38,7 +38,10 @@ class User(AbstractUser):
         ordering = ('-date_joined',)
 
     def __str__(self):
-        return self.email
+        return (
+            f'Username: {self.username}, '
+            f'Email: {self.email}'
+        )
 
 
 class Subscribe(models.Model):
