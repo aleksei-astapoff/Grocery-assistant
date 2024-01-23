@@ -1,10 +1,11 @@
 from django.contrib import admin
 
-from .models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredient,
-                     ShoppingCart, Subscribe, Tag)
+from .models import (FavoriteRecipe, Ingredient, Recipe,
+                     RecipeIngredient, ShoppingCart, Tag)
 
 RECIPE_LIMIT_SHOW = 5
 admin.site.empty_value_display = '-Не задано-'
+
 
 class RecipeIngredientAdmin(admin.StackedInline):
     model = RecipeIngredient
@@ -22,12 +23,11 @@ class RecipeAdmin(admin.ModelAdmin):
         'author__email', 'ingredients__name')
     list_filter = ('pub_date', 'tags',)
     inlines = (RecipeIngredientAdmin,)
-    
 
     @admin.display(description='Электронная почта автора',)
     def get_author(self, obj):
         return obj.author.email
-    
+
     @admin.display(description='Тэги')
     def get_tags(self, obj):
         tags_names = [_.name for _ in obj.tags.all()]
@@ -45,7 +45,6 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description='В избранном')
     def get_favorite_count(self, obj):
         return obj.favorite_recipe.count()
-    
 
 
 @admin.register(Tag)
@@ -61,14 +60,6 @@ class IngredientAdmin(admin.ModelAdmin):
         'id', 'name', 'measurement_unit',)
     search_fields = (
         'name', 'measurement_unit',)
-
-
-@admin.register(Subscribe)
-class SubscribeAdmin(admin.ModelAdmin):
-    list_display = (
-        'id', 'user', 'author', 'created',)
-    search_fields = (
-        'user__email', 'author__email',)
 
 
 @admin.register(FavoriteRecipe)
