@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 from .models import Subscribe
 
+
 User = get_user_model()
 
 admin.site.empty_value_display = '-Не задано-'
@@ -15,7 +16,8 @@ class UserAdmin(admin.ModelAdmin):
         'first_name', 'last_name', 'date_joined',)
     search_fields = ('email', 'username', 'first_name', 'last_name')
     list_filter = ('email', 'first_name')
-    empty_value_display = '-пусто-'
+    readonly_fields = ('last_login',)
+
 
 
 @admin.register(Subscribe)

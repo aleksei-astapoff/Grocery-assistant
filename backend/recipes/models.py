@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+
 User = get_user_model()
 
 MAX_LENGTH_CHAR_FIELD = 200
@@ -114,11 +115,13 @@ class RecipeIngredient(models.Model):
         Recipe,
         on_delete=models.CASCADE,
         related_name='recipe',
+        verbose_name='Рецепт'
     )
     ingredient = models.ForeignKey(
         'Ingredient',
         on_delete=models.CASCADE,
         related_name='ingredient',
+        verbose_name='Ингредиент'
     )
     amount = models.PositiveSmallIntegerField(
         default=1,
@@ -131,7 +134,7 @@ class RecipeIngredient(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Количество ингредиента'
+        verbose_name = 'Ингредиент'
         verbose_name_plural = 'Количество ингредиентов'
         ordering = ['-id']
         constraints = [

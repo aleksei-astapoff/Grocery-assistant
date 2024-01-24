@@ -154,8 +154,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 @api_view(['post'])
 def set_password(request):
-    """Изменить пароль."""
-
     serializer = UserPasswordSerializer(
         data=request.data,
         context={'request': request})
@@ -165,8 +163,10 @@ def set_password(request):
             {'message': 'Пароль изменен!'},
             status=status.HTTP_201_CREATED)
     return Response(
-        {'error': 'Введите верные данные!'},
-        status=status.HTTP_400_BAD_REQUEST)
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
+    )
+
 
 
 class AddDeleteFavoriteRecipe(
