@@ -117,6 +117,6 @@ class SoppingCartAdmin(admin.ModelAdmin):
             for item in obj.recipe.values('name')[:RECIPE_LIMIT_SHOW]
         ]
 
-    @admin.display(description='В избранных')
+    @admin.display(description='Корзина')
     def get_count(self, obj):
         return obj.recipe.count()

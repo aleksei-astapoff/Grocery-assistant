@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from recipes.models import Recipe
 from .permissions import IsAdminOrReadOnly
@@ -10,7 +10,7 @@ from .serializers import SubscribeRecipeSerializer
 class ObjectMixin:
 
     serializer_class = SubscribeRecipeSerializer
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     def get_object(self):
         recipe_id = self.kwargs['recipe_id']

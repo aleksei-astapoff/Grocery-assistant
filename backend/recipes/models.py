@@ -5,7 +5,6 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-
 User = get_user_model()
 
 MAX_LENGTH_CHAR_FIELD = 200
