@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db.models.aggregates import Count, Sum
 from django.db.models.expressions import Exists, OuterRef, Value
+from django.db.models import BooleanField
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 
@@ -41,14 +42,17 @@ class UsersViewSet(UserViewSet):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return User.objects.annotate(
-            is_subscribed=Exists(
-                self.request.user.follower.filter(
-                    author=OuterRef('id'))
-            )).prefetch_related(
-                'follower', 'following'
-        ) if self.request.user.is_authenticated else User.objects.annotate(
-            is_subscribed=Value(False))
+        if self.request.user.is_authenticated:
+            return User.objects.annotate(
+                is_subscribed=Exists(
+                    self.request.user.follower.filter(
+                        author=OuterRef('id'))
+                )).prefetch_related(
+                    'follower', 'following'
+            )
+        else:
+            return User.objects.annotate(
+                is_subscribed=BooleanField(default=False))
 
     def get_serializer_class(self):
         if self.request.method.lower() == 'post':
@@ -64,7 +68,11 @@ class UsersViewSet(UserViewSet):
         permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
         user = request.user
-        queryset = Subscribe.objects.filter(user=user)
+        queryset = Subscribe.objects.filter(
+            user=user).select_related('author').annotate(
+            recipes_count=Count('author__recipe'),
+            is_subscribed=Value(True, output_field=BooleanField())
+        )
         pages = self.paginate_queryset(queryset)
         serializer = SubscribeSerializer(
             pages, many=True,
@@ -72,9 +80,8 @@ class UsersViewSet(UserViewSet):
         return self.get_paginated_response(serializer.data)
 
 
-class AddAndDeleteSubscribe(
-        generics.ListCreateAPIView,
-        generics.RetrieveDestroyAPIView):
+class AddAndDeleteSubscribe(generics.RetrieveDestroyAPIView,
+                            generics.ListCreateAPIView):
 
     serializer_class = SubscribeSerializer
 
@@ -85,8 +92,7 @@ class AddAndDeleteSubscribe(
             'following__recipe'
         ).annotate(
             recipes_count=Count('following__recipe'),
-            is_subscribed=Value(True),
-        )
+            is_subscribed=Value(True), )
 
     def get_object(self):
         user_id = self.kwargs['user_id']
@@ -98,18 +104,24 @@ class AddAndDeleteSubscribe(
         instance = self.get_object()
         if request.user.id == instance.id:
             return Response(
-                {'errors': 'Нельзя  подписаться на самого себя!'},
+                {'errors': 'Нельзя подписаться на самого себя!'},
                 status=status.HTTP_400_BAD_REQUEST)
         if request.user.follower.filter(author=instance).exists():
             return Response(
-                {'errors': 'Нельзя  подписаться дважды!'},
+                {'errors': 'Уже есть подписка!'},
                 status=status.HTTP_400_BAD_REQUEST)
-        subscribe = request.user.follower.create(author=instance)
-        serializer = self.get_serializer(subscribe)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        subs = request.user.follower.create(author=instance)
+        serializer = self.get_serializer(subs)
+        serialized_data = serializer.data
+        serialized_data['recipes_count'] = instance.recipe.count()
+        serialized_data['is_subscribed'] = True
+        return Response(serialized_data, status=status.HTTP_201_CREATED)
 
     def perform_destroy(self, instance):
-        self.request.user.follower.filter(author=instance).delete()
+        subscription = get_object_or_404(Subscribe, author=instance)
+        if subscription.user != self.request.user:
+            raise ValidationError('Ошибка отписки.')
+        subscription.delete()
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
@@ -145,8 +157,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
             )
         else:
             return self.get_base_queryset().annotate(
-                is_in_shopping_cart=Value(False),
-                is_favorited=Value(False),
+                is_in_shopping_cart=BooleanField(default=False),
+                is_favorited=BooleanField(default=False),
             )
 
     def get_queryset(self):
@@ -163,8 +175,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 user=user, recipe=recipe
             ).exists()
         else:
-            recipe.is_favorited = False
-            recipe.is_in_shopping_cart = False
+            recipe.is_favorited = BooleanField(default=False)
+            recipe.is_in_shopping_cart = BooleanField(default=False)
         return recipe
     
     def is_author_or_admin(self):
@@ -242,7 +254,9 @@ class AddDeleteShoppingCart(
         instance = self.get_object()
         shopping_cart = request.user.shopping_cart
         if instance in shopping_cart.recipe.all():
-            raise ValidationError('Рецепт уже находится в вашем списке покупок.')
+            raise ValidationError(
+                'Рецепт уже находится в вашем списке покупок.'
+            )
         shopping_cart.recipe.add(instance)
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
