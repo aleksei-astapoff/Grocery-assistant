@@ -22,7 +22,7 @@ from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from recipes.models import (FavoriteRecipe, Ingredient, Recipe, 
+from recipes.models import (FavoriteRecipe, Ingredient, Recipe,
                             RecipeIngredient, ShoppingCart, Tag)
 from users.models import Subscribe
 from .filters import IngredientFilter, RecipeFilter
@@ -178,7 +178,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             recipe.is_favorited = BooleanField(default=False)
             recipe.is_in_shopping_cart = BooleanField(default=False)
         return recipe
-    
+
     def is_author_or_admin(self):
         recipe = get_object_or_404(Recipe, pk=self.kwargs.get('pk'))
         if not (
@@ -196,7 +196,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         self.is_author_or_admin()
         return super().partial_update(request, *args, **kwargs)
-    
+
     def destroy(self, request, *args, **kwargs):
         self.is_author_or_admin()
 
