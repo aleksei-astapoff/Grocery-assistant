@@ -38,9 +38,8 @@ User = get_user_model()
 
 class UsersViewSet(UserViewSet):
 
-    serializer_class = UserListSerializer
-    permission_classes = (IsAuthenticated,)
-
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    
     def get_queryset(self):
         if self.request.user.is_authenticated:
             return User.objects.annotate(
@@ -52,7 +51,8 @@ class UsersViewSet(UserViewSet):
             )
         else:
             return User.objects.annotate(
-                is_subscribed=BooleanField(default=False))
+                is_subscribed=Value(False,output_field=BooleanField()))
+            
 
     def get_serializer_class(self):
         if self.request.method.lower() == 'post':
@@ -92,7 +92,7 @@ class AddAndDeleteSubscribe(generics.RetrieveDestroyAPIView,
             'following__recipe'
         ).annotate(
             recipes_count=Count('following__recipe'),
-            is_subscribed=Value(True), )
+            is_subscribed=Value(True, output_field=BooleanField()), )
 
     def get_object(self):
         user_id = self.kwargs['user_id']
@@ -157,8 +157,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
             )
         else:
             return self.get_base_queryset().annotate(
-                is_in_shopping_cart=BooleanField(default=False),
-                is_favorited=BooleanField(default=False),
+                is_in_shopping_cart=Value(False, output_field=BooleanField()),
+                is_favorited=Value(False, output_field=BooleanField()),
             )
 
     def get_queryset(self):
@@ -175,8 +175,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 user=user, recipe=recipe
             ).exists()
         else:
-            recipe.is_favorited = BooleanField(default=False)
-            recipe.is_in_shopping_cart = BooleanField(default=False)
+            recipe.is_favorited = Value(False, output_field=BooleanField())
+            recipe.is_in_shopping_cart = Value(False, output_field=BooleanField())
         return recipe
 
     def is_author_or_admin(self):
