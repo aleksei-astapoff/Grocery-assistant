@@ -14,16 +14,14 @@ class TagForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        color = cleaned_data.get('color')
+        color = cleaned_data.get("color")
 
-        if color and not color.startswith('#'):
+        if not color:
+            self.add_error('color', 'Выберите цвет')
+        else:
             try:
-
-                color = webcolors.name_to_hex(color)
+                cleaned_data["color"] = webcolors.name_to_hex(color)
             except ValueError:
-                self.add_error(
-                    f'{color}, '
-                    f'Указанное значение цвета неверно или не поддерживается.'
-                )
-        cleaned_data['color'] = color
+                self.add_error('color', 'Обязательное поле.')
+
         return cleaned_data

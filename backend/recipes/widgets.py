@@ -4,8 +4,8 @@ from django.utils.safestring import mark_safe
 from django.template.loader import render_to_string
 
 NAMED_COLORS = list(webcolors.CSS3_HEX_TO_NAMES.items())
-SELECTED_COLORS = (hex_value for name, hex_value
-                   in NAMED_COLORS if len(hex_value) <= 7)
+SELECTED_COLORS = tuple(hex_value for name, hex_value
+                        in NAMED_COLORS if len(hex_value) <= 7)
 
 
 class ColorPickerWidget(forms.Widget):
