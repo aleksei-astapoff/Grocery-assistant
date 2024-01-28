@@ -9,6 +9,8 @@ SELECTED_COLORS = tuple(hex_value for name, hex_value
 
 
 class ColorPickerWidget(forms.Widget):
+    """Виджет выбора цвета для админпанели Тэг."""
+
     template_name = 'color_picker.html'
 
     def value_from_datadict(self, data, files, name):

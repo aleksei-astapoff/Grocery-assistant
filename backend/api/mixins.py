@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 
 from recipes.models import Recipe
 from .permissions import IsAdminOrReadOnly
@@ -8,6 +8,7 @@ from .serializers import SubscribeRecipeSerializer
 
 
 class ObjectMixin:
+    """Миксин для работы с Избранным и Корзиной."""
 
     serializer_class = SubscribeRecipeSerializer
     permission_classes = (IsAuthenticated,)
@@ -20,5 +21,6 @@ class ObjectMixin:
 
 
 class PermissionMixin:
+    """Миксин для работы с Тэгами и Ингредиентами."""
 
     permission_classes = (IsAdminOrReadOnly,)

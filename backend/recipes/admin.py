@@ -10,12 +10,16 @@ admin.site.empty_value_display = '-Не задано-'
 
 
 class RecipeIngredientAdmin(admin.StackedInline):
+    """Административная панель связи  Рецептов и Ингредиентов."""
+
     model = RecipeIngredient
     autocomplete_fields = ('ingredient',)
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    """Административная панель Рецептов."""
+
     list_display = (
         'id', 'get_author', 'name', 'text',
         'cooking_time', 'get_tags', 'get_ingredients',
@@ -54,6 +58,8 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
+    """Административная панель Тэгов."""
+
     form = TagForm
     list_display = (
         'id', 'name', 'color_name',
@@ -72,9 +78,10 @@ class TagAdmin(admin.ModelAdmin):
     color_name.short_description = 'Название цвета'
 
 
-
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
+    """Административная панель Ингредиентов."""
+
     list_display = (
         'id', 'name', 'measurement_unit',
     )
@@ -88,6 +95,8 @@ class IngredientAdmin(admin.ModelAdmin):
 
 @admin.register(FavoriteRecipe)
 class FavoriteRecipeAdmin(admin.ModelAdmin):
+    """Административная панель Избранных Рецептов Пользователя."""
+
     list_display = (
         'id', 'user', 'get_recipe', 'get_count')
 
@@ -107,6 +116,8 @@ class FavoriteRecipeAdmin(admin.ModelAdmin):
 
 @admin.register(ShoppingCart)
 class SoppingCartAdmin(admin.ModelAdmin):
+    """Административная панель Корзины Пользователя. """
+
     list_display = (
         'id', 'user', 'get_recipe', 'get_count')
 

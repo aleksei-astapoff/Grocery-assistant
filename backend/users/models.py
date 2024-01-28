@@ -1,3 +1,5 @@
+import django.contrib.auth.password_validation as validators
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -6,6 +8,8 @@ MAX_LENGTH_CHAR_FIELD = 150
 
 
 class User(AbstractUser):
+    """Модель Пользователя."""
+
     email = models.EmailField(
         'Электронная почта',
         max_length=MAX_LENGTH_EMAIL_FIELD,
@@ -27,10 +31,27 @@ class User(AbstractUser):
     password = models.CharField(
         'Пароль',
         max_length=MAX_LENGTH_CHAR_FIELD,
+        validators=[validators.validate_password],
+        help_text=('Пароль должен соответствовать требованиям безопасности.'),
+    )
+    is_blocked = models.BooleanField(
+        default=False,
+        verbose_name='Заблокирован',
     )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+
+    def save(self, *args, **kwargs):
+        self.username = self.email
+        super().save(*args, **kwargs)
+
+    def create_superuser(self, email, password):
+        user = self.create_user(email=email)
+        user.set_password(password)
+        user.is_staff = True
+        user.is_superuser = True
+        return super().save()
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -45,6 +66,8 @@ class User(AbstractUser):
 
 
 class Subscribe(models.Model):
+    """"Модель Подписок Пользователя."""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -70,8 +93,20 @@ class Subscribe(models.Model):
             models.UniqueConstraint(
                 fields=['user', 'author'],
                 name='unique_subscription',
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('author')),
+                name='prevent_self_subscription',
             )
         ]
 
     def __str__(self):
-        return f'Пользователь {self.user} подписан на автора {self.author}'
+        return f'Пользователь {self.user} подписался на автора {self.author}'
+
+    def clean(self) -> None:
+        if self.user == self.author:
+            raise ValidationError('Нельзя подписаться на самого себя')
+
+    def save(self, *args, **kwargs) -> None:
+        self.clean()
+        super().save(*args, **kwargs)

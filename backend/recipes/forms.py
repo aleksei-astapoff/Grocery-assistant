@@ -5,6 +5,7 @@ from .widgets import ColorPickerWidget
 
 
 class TagForm(forms.ModelForm):
+    """Форма для отображения  виджета в админпанели Тэгов."""
     class Meta:
         model = Tag
         fields = '__all__'

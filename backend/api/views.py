@@ -5,7 +5,7 @@ from django.contrib.auth.hashers import make_password
 from django.db.models.aggregates import Count, Sum
 from django.db.models.expressions import Exists, OuterRef, Value
 from django.db.models import BooleanField
-from django.http import FileResponse
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 
 
@@ -17,7 +17,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework import generics, status, viewsets
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
@@ -26,7 +26,6 @@ from recipes.models import (FavoriteRecipe, Ingredient, Recipe,
                             RecipeIngredient, ShoppingCart, Tag)
 from users.models import Subscribe
 from .filters import IngredientFilter, RecipeFilter
-from .permissions import IsAuthorOrAdmin
 from .mixins import ObjectMixin, PermissionMixin
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, SubscribeSerializer,
@@ -37,22 +36,30 @@ User = get_user_model()
 
 
 class UsersViewSet(UserViewSet):
+    """Вью сет для работы с Пользователями."""
 
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    
+    lookup_field = 'id'
+
     def get_queryset(self):
         if self.request.user.is_authenticated:
             return User.objects.annotate(
                 is_subscribed=Exists(
-                    self.request.user.follower.filter(
-                        author=OuterRef('id'))
-                )).prefetch_related(
-                    'follower', 'following'
-            )
+                    Subscribe.objects.filter(
+                        user=self.request.user,
+                        author=OuterRef('id')
+                    )
+                )
+            ).prefetch_related('follower', 'following')
         else:
             return User.objects.annotate(
-                is_subscribed=Value(False,output_field=BooleanField()))
-            
+                is_subscribed=Value(False, output_field=BooleanField())
+            )
+
+    @action(detail=False, methods=['get'], url_path='me')
+    def get_current_user(self, request, *args, **kwargs):
+        self.kwargs['id'] = request.user.id
+        return self.retrieve(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.request.method.lower() == 'post':
@@ -82,8 +89,10 @@ class UsersViewSet(UserViewSet):
 
 class AddAndDeleteSubscribe(generics.RetrieveDestroyAPIView,
                             generics.ListCreateAPIView):
+    """Вью сет для работы с Подписками Пользователей."""
 
     serializer_class = SubscribeSerializer
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return self.request.user.follower.select_related(
@@ -118,13 +127,21 @@ class AddAndDeleteSubscribe(generics.RetrieveDestroyAPIView,
         return Response(serialized_data, status=status.HTTP_201_CREATED)
 
     def perform_destroy(self, instance):
-        subscription = get_object_or_404(Subscribe, author=instance)
-        if subscription.user != self.request.user:
-            raise ValidationError('Ошибка отписки.')
+        if self.request.user == instance:
+            raise PermissionDenied("Нельзя отписаться от самого себя")
+        try:
+            subscription = Subscribe.objects.get(
+                author=instance,
+                user=self.request.user
+            )
+        except Subscribe.DoesNotExist as exc:
+            raise Http404 from exc
+
         subscription.delete()
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
+    """Вью сет для работы с Рецептами."""
 
     queryset = Recipe.objects.all()
     filterset_class = RecipeFilter
@@ -166,6 +183,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         recipe = serializer.save(author=self.request.user)
+        if not recipe.id:
+            raise Http404("Рецепт не был создан.")
         user = self.request.user
         if user.is_authenticated:
             recipe.is_favorited = FavoriteRecipe.objects.filter(
@@ -176,7 +195,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
             ).exists()
         else:
             recipe.is_favorited = Value(False, output_field=BooleanField())
-            recipe.is_in_shopping_cart = Value(False, output_field=BooleanField())
+            recipe.is_in_shopping_cart = Value(
+                False,
+                output_field=BooleanField()
+            )
         return recipe
 
     def is_author_or_admin(self):
@@ -205,6 +227,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 @api_view(['post'])
 def set_password(request):
+    """Функция для смены Пароля Пользователя."""
+
     serializer = UserPasswordSerializer(
         data=request.data,
         context={'request': request})
@@ -219,10 +243,9 @@ def set_password(request):
     )
 
 
-class AddDeleteFavoriteRecipe(
-        ObjectMixin,
-        generics.RetrieveDestroyAPIView,
-        generics.ListCreateAPIView):
+class AddDeleteFavoriteRecipe(ObjectMixin, generics.RetrieveDestroyAPIView,
+                              generics.ListCreateAPIView):
+    """Вью сет для работы с Избранными Рецептами."""
 
     def create(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -245,10 +268,9 @@ class AddDeleteFavoriteRecipe(
             )
 
 
-class AddDeleteShoppingCart(
-        ObjectMixin,
-        generics.RetrieveDestroyAPIView,
-        generics.ListCreateAPIView):
+class AddDeleteShoppingCart(ObjectMixin, generics.RetrieveDestroyAPIView,
+                            generics.ListCreateAPIView):
+    """Вью сет для работы с Корзиной Пользователя."""
 
     def create(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -271,17 +293,15 @@ class AddDeleteShoppingCart(
             )
 
 
-class TagsViewSet(
-        PermissionMixin,
-        viewsets.ModelViewSet):
+class TagsViewSet(PermissionMixin, viewsets.ModelViewSet):
+    """Вью сет для работы с Тэгами."""
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
-class IngredientsViewSet(
-        PermissionMixin,
-        viewsets.ModelViewSet):
+class IngredientsViewSet(PermissionMixin, viewsets.ModelViewSet):
+    """Вью сет для работы с Ингредиентами."""
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
@@ -289,7 +309,10 @@ class IngredientsViewSet(
 
 
 @api_view(['GET'],)
+@permission_classes([IsAuthenticated])
 def download_shopping_cart(request):
+    """Функция выполняющая выгрузку Корзины Пользователя в PDF формате."""
+
     pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
     buffer = BytesIO()
     p = canvas.Canvas(buffer)

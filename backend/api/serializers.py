@@ -13,6 +13,7 @@ User = get_user_model()
 
 
 class SubscribedMixin:
+    """Миксин для работы с Подписками"""
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
@@ -24,6 +25,7 @@ class SubscribedMixin:
 
 
 class UserListSerializer(SubscribedMixin, serializers.ModelSerializer):
+    """Сериализатор для обработки запросов по представлению пользователей"""
     is_subscribed = serializers.BooleanField(read_only=True)
 
     class Meta:
@@ -47,6 +49,7 @@ class UserListSerializer(SubscribedMixin, serializers.ModelSerializer):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для обработки запросов сохранения пользователей."""
 
     class Meta:
         model = User
@@ -61,10 +64,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         try:
             django_validate_email(value)
-        except ValidationError:
+        except ValidationError as exc:
             raise serializers.ValidationError(
                 'Введите корректный адрес электронной почты.'
-            )
+            ) from exc
 
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError('Этот email уже используется.')
@@ -77,6 +80,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 class UserPasswordSerializer(serializers.Serializer):
+    """Сериализатор для обработки смены пароля пользователя."""
+
     new_password = serializers.CharField(
         label='Новый пароль',
     )
@@ -107,6 +112,7 @@ class UserPasswordSerializer(serializers.Serializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор для обработки Тэгов."""
 
     class Meta:
         model = Tag
@@ -114,6 +120,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор для обработки Ингредиентов."""
 
     class Meta:
         model = Ingredient
@@ -121,6 +128,8 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор для обработки данных для связей Рецепты-Ингредиенты"""
+
     id = serializers.ReadOnlyField(
         source='ingredient.id')
     name = serializers.ReadOnlyField(
@@ -134,6 +143,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeUserSerializer(SubscribedMixin, serializers.ModelSerializer):
+    """Сериализатор для обработки данных для связей Рецепты-Подписчики."""
     is_subscribed = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -147,6 +157,7 @@ class RecipeUserSerializer(SubscribedMixin, serializers.ModelSerializer):
 
 
 class IngredientsEditSerializer(serializers.ModelSerializer):
+    """Сериализатор для добавления Ингредиентов."""
 
     id = serializers.IntegerField()
     amount = serializers.IntegerField()
@@ -160,6 +171,8 @@ class IngredientsEditSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для добавления Рецептов."""
+
     image = Base64ImageField(
         max_length=None,
         use_url=True)
@@ -200,17 +213,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def validate_cooking_time(self, cooking_time):
         if int(cooking_time) < 1:
             raise serializers.ValidationError(
-                'Время приготовления >= 1!')
+                'Убедитесь, что время приготовления больше либо равно 1')
         return cooking_time
 
     def validate_ingredients(self, ingredients):
         if not ingredients:
             raise serializers.ValidationError(
-                'Мин. 1 ингредиент в рецепте!')
+                'Минимальное количество: 1 ингредиент в рецепте!')
         for ingredient in ingredients:
             if int(ingredient.get('amount')) < 1:
                 raise serializers.ValidationError(
-                    'Количество ингредиента >= 1!')
+                    'Убедитесь, количество ингредиента больше либо равно 1.')
         return ingredients
 
     def create_ingredients(self, ingredients, recipe):
@@ -249,6 +262,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
+    """Сериализатор для выгрузки Рецептов."""
+
     image = Base64ImageField()
     tags = TagSerializer(
         many=True,
@@ -272,6 +287,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class SubscribeRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для выгрузки подписки на Рецепт."""
 
     class Meta:
         model = Recipe
@@ -284,6 +300,7 @@ class SubscribeRecipeSerializer(serializers.ModelSerializer):
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
+    """Сериализатор для обработки подписок."""
     id = serializers.IntegerField(
         source='author.id')
     email = serializers.EmailField(
