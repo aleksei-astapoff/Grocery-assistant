@@ -12,6 +12,8 @@ MAX_LENGTH_COLOR = 7
 
 
 class Ingredient(models.Model):
+    """Модель Ингредиентов."""
+
     name = models.CharField(
         'Название ингредиента',
         max_length=MAX_LENGTH_CHAR_FIELD,
@@ -31,6 +33,8 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
+    """Модель Тэгов."""
+
     name = models.CharField(
         'Имя',
         max_length=MAX_LENGTH_CHAR_FIELD,
@@ -62,6 +66,8 @@ class Tag(models.Model):
 
 
 class Recipe(models.Model):
+    """Модель Рецептов."""
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -110,15 +116,19 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
+    """Модель связи моделей Рецептов и ингредиентов."""
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         related_name='recipe',
+        verbose_name='Рецепт'
     )
     ingredient = models.ForeignKey(
         'Ingredient',
         on_delete=models.CASCADE,
         related_name='ingredient',
+        verbose_name='Ингредиент'
     )
     amount = models.PositiveSmallIntegerField(
         default=1,
@@ -131,7 +141,7 @@ class RecipeIngredient(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Количество ингредиента'
+        verbose_name = 'Ингредиент'
         verbose_name_plural = 'Количество ингредиентов'
         ordering = ['-id']
         constraints = [
@@ -143,6 +153,8 @@ class RecipeIngredient(models.Model):
 
 
 class FavoriteRecipe(models.Model):
+    """Модель избранных рецептов пользователя."""
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -171,6 +183,8 @@ class FavoriteRecipe(models.Model):
 
 
 class ShoppingCart(models.Model):
+    """"Модель корзины пользователя."""
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,

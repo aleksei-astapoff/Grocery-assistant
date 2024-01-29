@@ -1,27 +1,36 @@
+import webcolors
 from django.contrib import admin
 
 from .models import (FavoriteRecipe, Ingredient, Recipe,
                      RecipeIngredient, ShoppingCart, Tag)
+from .forms import TagForm
 
 RECIPE_LIMIT_SHOW = 5
 admin.site.empty_value_display = '-Не задано-'
 
 
 class RecipeIngredientAdmin(admin.StackedInline):
+    """Административная панель связи  Рецептов и Ингредиентов."""
+
     model = RecipeIngredient
     autocomplete_fields = ('ingredient',)
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    """Административная панель Рецептов."""
+
     list_display = (
         'id', 'get_author', 'name', 'text',
         'cooking_time', 'get_tags', 'get_ingredients',
-        'pub_date', 'get_favorite_count')
+        'pub_date', 'get_favorite_count',
+    )
     search_fields = (
         'name', 'cooking_time',
-        'author__email', 'ingredients__name')
+        'author__email', 'ingredients__name',
+    )
     list_filter = ('pub_date', 'tags',)
+
     inlines = (RecipeIngredientAdmin,)
 
     @admin.display(description='Электронная почта автора',)
@@ -49,21 +58,45 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
+    """Административная панель Тэгов."""
+
+    form = TagForm
     list_display = (
-        'id', 'name', 'color', 'slug',)
+        'id', 'name', 'color_name',
+        'color', 'slug',
+    )
     search_fields = ('name', 'slug',)
+
+    def color_name(self, obj):
+        try:
+            # Конвертируем HEX-код в название цвета
+            return webcolors.hex_to_name(obj.color)
+        except ValueError:
+            # Возвращаем HEX-код, если невозможно преобразовать
+            return obj.color
+
+    color_name.short_description = 'Название цвета'
 
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
+    """Административная панель Ингредиентов."""
+
     list_display = (
-        'id', 'name', 'measurement_unit',)
+        'id', 'name', 'measurement_unit',
+    )
     search_fields = (
-        'name', 'measurement_unit',)
+        'name', 'measurement_unit',
+    )
+    list_editable = (
+        'name', 'measurement_unit'
+    )
 
 
 @admin.register(FavoriteRecipe)
 class FavoriteRecipeAdmin(admin.ModelAdmin):
+    """Административная панель Избранных Рецептов Пользователя."""
+
     list_display = (
         'id', 'user', 'get_recipe', 'get_count')
 
@@ -83,6 +116,8 @@ class FavoriteRecipeAdmin(admin.ModelAdmin):
 
 @admin.register(ShoppingCart)
 class SoppingCartAdmin(admin.ModelAdmin):
+    """Административная панель Корзины Пользователя. """
+
     list_display = (
         'id', 'user', 'get_recipe', 'get_count')
 
@@ -93,6 +128,6 @@ class SoppingCartAdmin(admin.ModelAdmin):
             for item in obj.recipe.values('name')[:RECIPE_LIMIT_SHOW]
         ]
 
-    @admin.display(description='В избранных')
+    @admin.display(description='Корзина')
     def get_count(self, obj):
         return obj.recipe.count()
