@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth import get_user_model
 
 from .models import Subscribe
@@ -11,8 +12,9 @@ admin.site.empty_value_display = '-Не задано-'
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(UserAdmin):
     """"Административная панель Пользователя"""
+
     form = UserForm
 
     list_display = (
@@ -32,6 +34,11 @@ class UserAdmin(admin.ModelAdmin):
         }),
         ('Permissions', {'fields': ('is_staff', 'is_blocked')}),
     )
+
+    def save_model(self, request, obj, form, change):
+        if 'password' in form.changed_data:
+            obj.set_password(form.cleaned_data['password'])
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Subscribe)

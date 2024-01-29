@@ -43,7 +43,8 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     def save(self, *args, **kwargs):
-        self.username = self.email
+        if not self.username or self.username.isspace():
+            self.username = self.email
         super().save(*args, **kwargs)
 
     def create_superuser(self, email, password):

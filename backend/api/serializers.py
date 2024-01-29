@@ -50,6 +50,8 @@ class UserListSerializer(SubscribedMixin, serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для обработки запросов сохранения пользователей."""
+    
+    username = serializers.CharField(required=False,)
 
     class Meta:
         model = User
@@ -77,6 +79,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def validate_password(self, password):
         validators.validate_password(password)
         return password
+
+    def to_internal_value(self, data):
+        if 'username' not in data or not data['username']:
+            data['username'] = data['email']
+        return super().to_internal_value(data)
 
 
 class UserPasswordSerializer(serializers.Serializer):

@@ -56,7 +56,9 @@ class UsersViewSet(UserViewSet):
                 is_subscribed=Value(False, output_field=BooleanField())
             )
 
-    @action(detail=False, methods=['get'], url_path='me')
+    @action(detail=False,
+            methods=['get'], url_path='me',
+            permission_classes=(IsAuthenticated,),)
     def get_current_user(self, request, *args, **kwargs):
         self.kwargs['id'] = request.user.id
         return self.retrieve(request, *args, **kwargs)
@@ -67,12 +69,15 @@ class UsersViewSet(UserViewSet):
         return UserListSerializer
 
     def perform_create(self, serializer):
+        if ('username' not in self.request.data
+                or not self.request.data['username']):
+            self.request.data['username'] = self.request.data['email']
         password = make_password(self.request.data['password'])
         serializer.save(password=password)
 
     @action(
         detail=False,
-        permission_classes=(IsAuthenticated,))
+        permission_classes=(IsAuthenticated,),)
     def subscriptions(self, request):
         user = request.user
         queryset = Subscribe.objects.filter(
@@ -129,14 +134,11 @@ class AddAndDeleteSubscribe(generics.RetrieveDestroyAPIView,
     def perform_destroy(self, instance):
         if self.request.user == instance:
             raise PermissionDenied("Нельзя отписаться от самого себя")
-        try:
-            subscription = Subscribe.objects.get(
-                author=instance,
-                user=self.request.user
-            )
-        except Subscribe.DoesNotExist as exc:
-            raise Http404 from exc
-
+        subscription = get_object_or_404(
+            Subscribe,
+            author=instance,
+            user=self.request.user
+        )
         subscription.delete()
 
 
@@ -203,9 +205,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     def is_author_or_admin(self):
         recipe = get_object_or_404(Recipe, pk=self.kwargs.get('pk'))
-        if not (
-            recipe.author == self.request.user or self.request.user.is_staff
-        ):
+        if not recipe.author == self.request.user:
             raise PermissionDenied(
                 'У вас недостаточно прав для выполнения данного действия.'
             )
