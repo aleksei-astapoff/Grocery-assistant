@@ -50,7 +50,7 @@ class UserListSerializer(SubscribedMixin, serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для обработки запросов сохранения пользователей."""
-    
+
     username = serializers.CharField(required=False,)
 
     class Meta:

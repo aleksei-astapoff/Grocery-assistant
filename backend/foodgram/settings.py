@@ -10,9 +10,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = {os.getenv('SECRET_KEY', 'default_secret_key')}
 
-DEBUG = os.getenv('DEBUG', 'False') == True
+DEBUG = os.getenv('DEBUG', default='True') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
+
+CSRF_TRUSTED_ORIGINS = ['https://duck8000.hopto.org']
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -124,7 +126,8 @@ REST_FRAMEWORK = {
 DJOSER = {
     'PERMISSIONS': {
         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
-        'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
+        'user_list': ['rest_framework.permissions.AllowAny'],
     },
     'HIDE_USERS': False,
+    
 }

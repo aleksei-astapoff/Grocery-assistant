@@ -313,9 +313,9 @@ class IngredientsViewSet(PermissionMixin, viewsets.ModelViewSet):
 def download_shopping_cart(request):
     """Функция выполняющая выгрузку Корзины Пользователя в PDF формате."""
 
-    pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
     buffer = BytesIO()
     p = canvas.Canvas(buffer)
+    pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
     p.setFont('Vera', 20)
     ingredients = RecipeIngredient.objects.filter(
         recipe__shopping_cart__user=request.user
