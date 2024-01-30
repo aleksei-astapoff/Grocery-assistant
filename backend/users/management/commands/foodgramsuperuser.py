@@ -34,5 +34,5 @@ class Command(BaseCommand):
             ))
         except IntegrityError:
             self.stderr.write(self.style.ERROR(
-                 'Возникла ошибка при создании Суперпользователя'
+                'Возникла ошибка при создании Суперпользователя'
             ))
