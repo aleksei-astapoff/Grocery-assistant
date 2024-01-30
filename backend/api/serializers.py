@@ -1,6 +1,9 @@
+import base64
+
 import django.contrib.auth.password_validation as validators
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
+from django.core.files.base import ContentFile
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import make_password
 from drf_base64.fields import Base64ImageField
@@ -24,8 +27,23 @@ class SubscribedMixin:
         )
 
 
+class Base64ImageField(serializers.ImageField):
+    """Сериализатор для загрузки изображений."""
+
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            data = ContentFile(
+                base64.b64decode(imgstr), name='temp.{}'.format(ext)
+            )
+
+        return super().to_internal_value(data)
+
+
 class UserListSerializer(SubscribedMixin, serializers.ModelSerializer):
     """Сериализатор для обработки запросов по представлению пользователей"""
+
     is_subscribed = serializers.BooleanField(read_only=True)
 
     class Meta:
@@ -164,7 +182,7 @@ class RecipeUserSerializer(SubscribedMixin, serializers.ModelSerializer):
 
 
 class IngredientsEditSerializer(serializers.ModelSerializer):
-    """Сериализатор для добавления Ингредиентов."""
+    """Сериализатор для выбора Ингредиентов."""
 
     id = serializers.IntegerField()
     amount = serializers.IntegerField()
@@ -178,7 +196,7 @@ class IngredientsEditSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    """Сериализатор для добавления Рецептов."""
+    """Сериализатор для записи/обновления Рецептов."""
 
     image = Base64ImageField(
         max_length=None,

@@ -1,19 +1,14 @@
-from io import BytesIO
-
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db.models.aggregates import Count, Sum
 from django.db.models.expressions import Exists, OuterRef, Value
 from django.db.models import BooleanField
-from django.http import FileResponse, Http404
+from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 
 
 from djoser.views import UserViewSet
 
-from reportlab.pdfgen import canvas
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework import generics, status, viewsets
@@ -36,7 +31,7 @@ User = get_user_model()
 
 
 class UsersViewSet(UserViewSet):
-    """Вью сет для работы с Пользователями."""
+    """Вьюсет для работы с Пользователями."""
 
     permission_classes = (IsAuthenticatedOrReadOnly,)
     lookup_field = 'id'
@@ -94,7 +89,7 @@ class UsersViewSet(UserViewSet):
 
 class AddAndDeleteSubscribe(generics.RetrieveDestroyAPIView,
                             generics.ListCreateAPIView):
-    """Вью сет для работы с Подписками Пользователей."""
+    """Вьюсет для работы с Подписками Пользователей."""
 
     serializer_class = SubscribeSerializer
     permission_classes = (IsAuthenticated,)
@@ -143,7 +138,7 @@ class AddAndDeleteSubscribe(generics.RetrieveDestroyAPIView,
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    """Вью сет для работы с Рецептами."""
+    """Вьюсет для работы с Рецептами."""
 
     queryset = Recipe.objects.all()
     filterset_class = RecipeFilter
@@ -245,7 +240,7 @@ def set_password(request):
 
 class AddDeleteFavoriteRecipe(ObjectMixin, generics.RetrieveDestroyAPIView,
                               generics.ListCreateAPIView):
-    """Вью сет для работы с Избранными Рецептами."""
+    """Вьюсет для работы с Избранными Рецептами."""
 
     def create(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -270,7 +265,7 @@ class AddDeleteFavoriteRecipe(ObjectMixin, generics.RetrieveDestroyAPIView,
 
 class AddDeleteShoppingCart(ObjectMixin, generics.RetrieveDestroyAPIView,
                             generics.ListCreateAPIView):
-    """Вью сет для работы с Корзиной Пользователя."""
+    """Вьюсет для работы с Корзиной Пользователя."""
 
     def create(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -294,14 +289,14 @@ class AddDeleteShoppingCart(ObjectMixin, generics.RetrieveDestroyAPIView,
 
 
 class TagsViewSet(PermissionMixin, viewsets.ModelViewSet):
-    """Вью сет для работы с Тэгами."""
+    """Вьюсет для работы с Тэгами."""
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
 class IngredientsViewSet(PermissionMixin, viewsets.ModelViewSet):
-    """Вью сет для работы с Ингредиентами."""
+    """Вьюсет для работы с Ингредиентами."""
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
@@ -313,33 +308,24 @@ class IngredientsViewSet(PermissionMixin, viewsets.ModelViewSet):
 def download_shopping_cart(request):
     """Функция выполняющая выгрузку Корзины Пользователя в PDF формате."""
 
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer)
-    pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
-    p.setFont('Vera', 20)
+    content = "Список покупок:\n\n"
+
     ingredients = RecipeIngredient.objects.filter(
         recipe__shopping_cart__user=request.user
     ).values(
         'ingredient__name', 'ingredient__measurement_unit'
     ).annotate(amount=Sum('amount'))
 
-    p.drawString(100, 800, "Cписок покупок:")
-
-    height = 775
     for num, i in enumerate(ingredients):
         ingredient_string = (
             f'{num + 1}. {i["ingredient__name"]} - '
-            f'{i["amount"]} {i["ingredient__measurement_unit"]}'
+            f'{i["amount"]} {i["ingredient__measurement_unit"]}\n'
         )
-        p.drawString(100, height, ingredient_string)
-        height -= 25
+        content += ingredient_string
 
-    p.showPage()
-    p.save()
-
-    buffer.seek(0)
-    response = FileResponse(buffer, content_type='application/pdf')
+    # Устанавливаем заголовки ответа для скачивания файла
+    response = HttpResponse(content, content_type='text/plain; charset=utf-8')
     response['Content-Disposition'] = (
-        'attachment; filename="shopping_list.pdf"'
+        'attachment; filename="shopping_list.txt"'
     )
     return response

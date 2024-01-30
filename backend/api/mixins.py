@@ -24,3 +24,5 @@ class PermissionMixin:
     """Миксин для работы с Тэгами и Ингредиентами."""
 
     permission_classes = (IsAdminOrReadOnly,)
+    pagination_class = None
+    http_method_names = ('get',)
