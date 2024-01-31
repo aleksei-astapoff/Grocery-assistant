@@ -124,80 +124,21 @@ sudo service nginx reload
 ```
 
 7. ### Из дирректории foodgram выполнить команды:
-Перед выполнением обязательно создайте и заполните файл ENV в папке foodgram по примеру env.example и переместите файл конфигурации для nginx () в foodgram!
+Перед выполнением обязательно создайте и заполните файл ENV в папке foodgram по примеру env.example и переместите файл конфигурации для nginx (nginx.conf) в foodgram!
 ```
 sudo docker compose -f docker-compose.production.yml pull
 sudo docker compose -f docker-compose.production.yml down
 sudo docker compose -f docker-compose.production.yml up -d
 sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
-sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /static/static/
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py foodgramsuperuser
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py load_ingredients
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --no-input
 ```
 
 Если необходимо создать суперпользователя:
 ```
 sudo docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
 ```
-
-
-## Автоматический деплой проекта на сервер.
-
-Предусмотрен автоматический деплой проекта на сервер с помощью GitHub actions. Для этого описан workflow файл:
-.github/workflows/main.yml
-После деплоя в проекте предусмотрена отправка сооющения в телеграм чат.
-
-1. ### После внесения правок в проект выполните команды:
-```
-git add .
-git commit -m 'комментарий'
-git push
-```
-
-GitHub actions выполнит необходимые команды из workflow файла - контейнеры на удаленном сервере перезапустятся.
-
-2. ### Для правильной работы workflow необходимо добавить в Secrets репозитория на GitHub переменные окружения:
-```
-DOCKER_PASSWORD=<пароль от DockerHub>
-DOCKER_USERNAME=<имя пользователя DockerHub>
-HOST=<ip сервера>
-POSTGRES_DB=<название базы данных>
-POSTGRES_PASSWORD=<пароль к базе данных>
-POSTGRES_USER=<пользователь базы данных>
-SECRET_KEY=<секретный ключ проекта>
-SSH_KEY=<ваш приватный SSH-ключ (для получения команда: cat ~/.ssh/id_rsa)>
-SSH_PASSPHRASE=<пароль для сервера, если есть>
-USER=<username для подключения к удаленному серверу>
-TELEGRAM_TO=<id вашего Телеграм-аккаунта>
-TELEGRAM_TOKEN=<токен вашего бота>
-```
-
-
-## Настройка защищенного протоколо HTTPS:
-1. ### Установите и обновите зависимости для пакетного менеджера snap:
-```
-sudo snap install core; sudo snap refresh core
-```
-
-2. ### Установите пакет certbot:
-```
-sudo snap install --classic certbot
-```
-
-3. ### Создание ссылки на certbot в системной директории, чтобы у пользователя с правами администратора был доступ к этому пакету:
-```
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
-```
-
-4. ### Запустите certbot:
-```
-sudo certbot --nginx 
-```
-
-5. ### Перезагрузите конфигурацию Nginx:
-```
-sudo systemctl reload nginx 
-```
-
 
 ## Автор
 [Алексей Астапов](https://github.com/aleksei-astapoff)
