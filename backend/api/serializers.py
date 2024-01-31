@@ -289,7 +289,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 class RecipeReadSerializer(serializers.ModelSerializer):
     """Сериализатор для выгрузки Рецептов."""
 
-    image = Base64ImageField()
+    image = serializers.ImageField(use_url=True)
     tags = TagSerializer(
         many=True,
         read_only=True)
@@ -312,6 +312,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 class ObjectRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для выгрузки Подписки Избранного Корзины."""
+    image = serializers.ImageField(use_url=True)
 
     class Meta:
         model = Recipe
