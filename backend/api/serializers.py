@@ -307,12 +307,11 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        # fields = '__all__'
         exclude = ('pub_date',)
 
 
-class SubscribeRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для выгрузки подписки на Рецепт."""
+class ObjectRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для выгрузки Подписки Избранного Корзины."""
 
     class Meta:
         model = Recipe
@@ -355,6 +354,6 @@ class SubscribeSerializer(serializers.ModelSerializer):
         recipes = (
             obj.author.recipe.all()[:int(limit)] if limit
             else obj.author.recipe.all())
-        return SubscribeRecipeSerializer(
+        return ObjectRecipeSerializer(
             recipes,
             many=True).data

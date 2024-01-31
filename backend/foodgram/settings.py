@@ -12,9 +12,8 @@ SECRET_KEY = {os.getenv('SECRET_KEY', 'default_secret_key')}
 
 DEBUG = os.getenv('DEBUG', default='True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
-CSRF_TRUSTED_ORIGINS = ['https://duck8000.hopto.org']
 
 AUTH_USER_MODEL = 'users.User'
 

@@ -4,13 +4,13 @@ from rest_framework.permissions import IsAuthenticated
 
 from recipes.models import Recipe
 from .permissions import IsAdminOrReadOnly
-from .serializers import SubscribeRecipeSerializer
+from .serializers import ObjectRecipeSerializer
 
 
 class ObjectMixin:
     """Миксин для работы с Избранным и Корзиной."""
 
-    serializer_class = SubscribeRecipeSerializer
+    serializer_class = ObjectRecipeSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_object(self):
