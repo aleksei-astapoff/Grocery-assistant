@@ -58,7 +58,12 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-7. ### Запустите локальный сервер:
+7. ### Можно выполнить базовые загрузки перед этим создав  файл ENV в папке infra  заполнив его по примеру :
+```
+python manage.py createsuperuser
+```
+
+8. ### Запустите локальный сервер:
 ```
 python manage.py runserver
 ```
