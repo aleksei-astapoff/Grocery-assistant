@@ -58,9 +58,11 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-7. ### Можно выполнить базовые загрузки перед этим создав  файл ENV в папке infra  заполнив его по примеру :
+7. ### Можно выполнить базовые загрузки перед этим создав  файл ENV в папке infra  заполнив его по примеру env.example :
 ```
-python manage.py createsuperuser
+python manage.py foodgramsuperuser
+
+python manage.py load_ingredients
 ```
 
 8. ### Запустите локальный сервер:
@@ -75,10 +77,12 @@ python manage.py runserver
 Пользователям Windows нужно будет подготовить систему, установить для неё ядро Linux — и после этого установить Docker.
 
 2. ### В корневой дирректории выполните команды:
+Перед выполнением обязательно заполните файл ENV в папке infra по примеру env.example!
 ```
 docker-compose up
 docker compose exec backend python manage.py migrate
-docker compose exec backend python manage.py createsuperuser
+docker compose exec backend python manage.py foodgramsuperuser
+docker compose exec backend python manage.py load_ingredients
 docker compose exec backend python manage.py collectstatic
 ```
 
@@ -98,12 +102,12 @@ sudo apt-get install docker-compose-plugin
 
 3. ### Создайте папку kittygram:
 ```
-sudo mkdir kittygram
+sudo mkdir foodgram
 ```
 
 4. ### В папке kittygram создайте файл docker-compose.production.yml и скопируйте туда содержимое файла docker-compose.production.yml из проекта:
 ```
-cd kittygram
+cd foodgram
 sudo touch docker-compose.production.yml 
 sudo nano docker-compose.production.yml
 ```
@@ -119,7 +123,8 @@ sudo nginx -t
 sudo service nginx reload
 ```
 
-7. ### Из дирректории kittygram выполнить команды:
+7. ### Из дирректории foodgram выполнить команды:
+Перед выполнением обязательно создайте и заполните файл ENV в папке foodgram по примеру env.example и переместите файл конфигурации для nginx () в foodgram!
 ```
 sudo docker compose -f docker-compose.production.yml pull
 sudo docker compose -f docker-compose.production.yml down
