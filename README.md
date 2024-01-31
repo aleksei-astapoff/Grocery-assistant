@@ -4,8 +4,6 @@
 Пользователи смогут публиковать рецепты, подписываться на публикации других пользователей, добавлять понравившиеся рецепты в список «Избранное»,скачивать сводный список продуктов
 
 
-![Kittygram workflow](https://github.com/aleksei-astapoff/kittygram_final/actions/workflows/main.yml/badge.svg)  
-
 ## Технологии
 
 - Python
