@@ -69,12 +69,9 @@ class TagAdmin(admin.ModelAdmin):
 
     def color_name(self, obj):
         try:
-            # Конвертируем HEX-код в название цвета
             return webcolors.hex_to_name(obj.color)
         except ValueError:
-            # Возвращаем HEX-код, если невозможно преобразовать
             return obj.color
-
     color_name.short_description = 'Название цвета'
 
 

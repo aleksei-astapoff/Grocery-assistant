@@ -12,6 +12,7 @@ User = get_user_model()
 
 class Command(BaseCommand):
     """Команда для создания Суперпользователя."""
+    
     help = 'Создание суперпользователя'
 
     def handle(self, *args, **kwargs):
@@ -34,5 +35,5 @@ class Command(BaseCommand):
             ))
         except IntegrityError:
             self.stderr.write(self.style.ERROR(
-                 'Возникла ошибка при создании Суперпользователя'
+                'Возникла ошибка при создании Суперпользователя'
             ))

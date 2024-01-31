@@ -9,6 +9,7 @@ from api.views import (AddAndDeleteSubscribe, AddDeleteFavoriteRecipe,
 app_name = 'api'
 
 router_v1 = DefaultRouter()
+
 router_v1.register('users', UsersViewSet)
 router_v1.register('tags', TagsViewSet)
 router_v1.register('ingredients', IngredientsViewSet)

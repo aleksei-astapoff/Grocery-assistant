@@ -13,7 +13,7 @@ admin.site.empty_value_display = '-Не задано-'
 
 @admin.register(User)
 class UserAdmin(UserAdmin):
-    """"Административная панель Пользователя"""
+    """"Административная панель Пользователей"""
 
     form = UserForm
 
@@ -30,7 +30,8 @@ class UserAdmin(UserAdmin):
     )
     add_fieldsets = (
         (None, {
-            'fields': ('email', 'password1', 'password2'),
+            'fields': ('email', 'password1', 'password2',
+                       'first_name', 'last_name',),
         }),
         ('Permissions', {'fields': ('is_staff', 'is_blocked')}),
     )
