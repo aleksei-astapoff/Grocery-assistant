@@ -1,0 +1,9 @@
+[MESSAGE CONTROL]
+disable = missing-function-docstring,
+        missing-module-docstring,
+        missing-class-docstring,
+        import-outside-toplevel,
+        attribute-defined-outside-init,
+        import-error,
+        no-self-argument,
+        no-member
