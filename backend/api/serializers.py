@@ -6,7 +6,6 @@ from django.core.validators import validate_email as django_validate_email
 from django.core.files.base import ContentFile
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import make_password
-from drf_base64.fields import Base64ImageField
 from rest_framework import serializers
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
