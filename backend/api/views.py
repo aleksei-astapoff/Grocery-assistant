@@ -306,7 +306,7 @@ class IngredientsViewSet(PermissionMixin, viewsets.ModelViewSet):
 @api_view(['GET'],)
 @permission_classes([IsAuthenticated])
 def download_shopping_cart(request):
-    """Функция выполняющая выгрузку Корзины Пользователя в PDF формате."""
+    """Функция выполняющая выгрузку Корзины Пользователя в TXT формате."""
 
     content = "Список покупок:\n\n"
 

@@ -13,7 +13,7 @@ admin.site.empty_value_display = '-Не задано-'
 
 @admin.register(User)
 class UserAdmin(UserAdmin):
-    """"Административная панель Пользователя"""
+    """"Административная панель Пользователей"""
 
     form = UserForm
 

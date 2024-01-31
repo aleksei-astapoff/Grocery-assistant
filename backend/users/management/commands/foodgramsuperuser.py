@@ -12,6 +12,7 @@ User = get_user_model()
 
 class Command(BaseCommand):
     """Команда для создания Суперпользователя."""
+    
     help = 'Создание суперпользователя'
 
     def handle(self, *args, **kwargs):
