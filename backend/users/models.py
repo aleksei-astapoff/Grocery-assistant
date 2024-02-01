@@ -3,12 +3,14 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-MAX_LENGTH_EMAIL_FIELD = 254
-MAX_LENGTH_CHAR_FIELD = 150
+from foodgram.constant import (MAX_LENGTH_EMAIL_FIELD, MAX_LENGTH_CHAR_FIELD,
+                               USERNAME,)
 
 
 class User(AbstractUser):
     """Модель Пользователя."""
+
+    USERNAME_FIELD = USERNAME
 
     email = models.EmailField(
         'Электронная почта',
@@ -34,30 +36,13 @@ class User(AbstractUser):
         validators=[validators.validate_password],
         help_text=('Пароль должен соответствовать требованиям безопасности.'),
     )
-    is_blocked = models.BooleanField(
-        default=False,
-        verbose_name='Заблокирован',
-    )
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
-
-    def save(self, *args, **kwargs):
-        if not self.username or self.username.isspace():
-            self.username = self.email
-        super().save(*args, **kwargs)
-
-    def create_superuser(self, email, password):
-        user = self.create_user(email=email)
-        user.set_password(password)
-        user.is_staff = True
-        user.is_superuser = True
-        return super().save()
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name')
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('-date_joined',)
+        ordering = ('username',)
 
     def __str__(self):
         return (
@@ -81,15 +66,11 @@ class Subscribe(models.Model):
         related_name='following',
         verbose_name='Автор',
     )
-    created = models.DateTimeField(
-        'Дата подписки',
-        auto_now_add=True,
-    )
 
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
-        ordering = ['-created']
+        ordering = ('user', )
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'author'],

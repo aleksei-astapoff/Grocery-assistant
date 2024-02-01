@@ -1,14 +1,12 @@
-from django.contrib.auth import get_user_model
 from django.core import validators
-from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
-User = get_user_model()
+from colorfield.fields import ColorField
 
-MAX_LENGTH_CHAR_FIELD = 200
-MAX_LENGTH_COLOR = 7
+from users.models import User
+from foodgram.constant import (MAX_LENGTH_CHAR_FIELD, MAX_LENGTH_COLOR,
+                               MIN_VALUE_TIME, MAX_VALUE_TIME,
+                               MIN_VALUE_AMOUNT, MAX_VALUE_AMOUNT,)
 
 
 class Ingredient(models.Model):
@@ -24,9 +22,15 @@ class Ingredient(models.Model):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ('name',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_ingredient_measurement'
+            )
+        ]
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}.'
@@ -39,7 +43,7 @@ class Tag(models.Model):
         'Имя',
         max_length=MAX_LENGTH_CHAR_FIELD,
     )
-    color = models.CharField(
+    color = ColorField(
         'Цвет',
         max_length=MAX_LENGTH_COLOR,
     )
@@ -47,19 +51,12 @@ class Tag(models.Model):
         'Ссылка',
         max_length=MAX_LENGTH_CHAR_FIELD,
         unique=True,
-        validators=[
-            RegexValidator(
-                regex=r'^[-a-zA-Z0-9_]+$',
-                message='Ссылка должна содержать только буквы, '
-                        'цифры, дефис или подчеркивание.',
-            )
-        ],
     )
 
     class Meta:
         verbose_name = 'Тэг'
         verbose_name_plural = 'Тэги'
-        ordering = ['name']
+        ordering = ('name',)
 
     def __str__(self):
         return self.name
@@ -99,8 +96,13 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления в минутах',
         validators=[
+            validators.MaxValueValidator(
+                MAX_VALUE_TIME,
+                message=f'Макс. время приготовления {MAX_VALUE_TIME} минут'
+            ),
             validators.MinValueValidator(
-                1, message='Мин. время приготовления 1 минута'
+                MIN_VALUE_TIME,
+                message=f'Мин. время приготовления {MIN_VALUE_TIME} минута'
             ),
         ],
     )
@@ -133,8 +135,13 @@ class RecipeIngredient(models.Model):
     amount = models.PositiveSmallIntegerField(
         default=1,
         validators=(
+            validators.MaxValueValidator(
+                MAX_VALUE_AMOUNT,
+                message=f'Макс. количество ингридиентовя {MAX_VALUE_AMOUNT} '
+            ),
             validators.MinValueValidator(
-                1, message='Минимальное количество ингридиентов 1'
+                MIN_VALUE_AMOUNT,
+                message=f'Мин. количество ингридиентов {MIN_VALUE_AMOUNT}'
             ),
         ),
         verbose_name='Количество',
@@ -143,7 +150,7 @@ class RecipeIngredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Количество ингредиентов'
-        ordering = ['-id']
+        ordering = ('recipe', 'amount',)
         constraints = [
             models.UniqueConstraint(
                 fields=['recipe', 'ingredient'],
@@ -152,62 +159,48 @@ class RecipeIngredient(models.Model):
         ]
 
 
-class FavoriteRecipe(models.Model):
+class FavoriteShoppingCartRelation(models.Model):
+    """Абстрактная модель для Избранного и Корзины"""
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name='Пользователь',
+    )
+    recipe = models.ManyToManyField(
+        Recipe,
+        verbose_name='Рецепт'
+    )
+
+    class Meta:
+        abstract = True
+        ordering = ('-id',)
+
+    def __str__(self):
+        recipe_names = tuple(recipe.name for recipe in self.recipe.all())
+        return f'Пользователь {self.user} добавил {recipe_names}'
+
+
+class FavoriteRecipe(FavoriteShoppingCartRelation):
     """Модель избранных рецептов пользователя."""
 
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        null=True,
-        related_name='favorite_recipe',
-        verbose_name='Пользователь',
-    )
-    recipe = models.ManyToManyField(
-        Recipe,
-        related_name='favorite_recipe',
-        verbose_name='Избранный рецепт'
-    )
-
-    class Meta:
+    class Meta(FavoriteShoppingCartRelation.Meta):
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранные рецепты'
+        default_related_name = 'favorite_recipe'
 
     def __str__(self):
-        recipe_names = [item['name'] for item in self.recipe.values('name')]
-        return f'Пользователь {self.user} добавил {recipe_names} в избранное.'
-
-    @receiver(post_save, sender=User)
-    def create_favorite_recipe(sender, instance, created, **kwargs):
-        if created:
-            return FavoriteRecipe.objects.create(user=instance)
+        return super().__str__() + ' в избранное.'
 
 
-class ShoppingCart(models.Model):
+class ShoppingCart(FavoriteShoppingCartRelation):
     """"Модель корзины пользователя."""
 
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        null=True,
-        related_name='shopping_cart',
-        verbose_name='Пользователь',
-    )
-    recipe = models.ManyToManyField(
-        Recipe,
-        related_name='shopping_cart',
-        verbose_name='Покупка',
-    )
-
-    class Meta:
+    class Meta(FavoriteShoppingCartRelation.Meta):
         verbose_name = 'Покупка'
         verbose_name_plural = 'Покупки'
-        ordering = ['-id']
+        default_related_name = 'shopping_cart'
 
     def __str__(self):
-        cart_names = [item['name'] for item in self.recipe.values('name')]
-        return f'Пользователь {self.user} добавил {cart_names} в покупки.'
-
-    @receiver(post_save, sender=User)
-    def create_shopping_cart(sender, instance, created, **kwargs):
-        if created:
-            return ShoppingCart.objects.create(user=instance)
+        return super().__str__() + ' в покупки.'
