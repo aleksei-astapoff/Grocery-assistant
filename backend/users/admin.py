@@ -55,10 +55,6 @@ class SubscribeAdmin(admin.ModelAdmin):
     """Административная панель Подписок Пользователя """
 
     list_display = (
-        'id', 'user', 'author', 'get_created',)
+        'id', 'user', 'author',)
     search_fields = (
         'user__email', 'author__email',)
-
-    def get_created(self, obj):
-        return obj.created.strftime('%Y-%m-%d %H:%M:%S')
-    get_created.short_description = 'Дата создания'

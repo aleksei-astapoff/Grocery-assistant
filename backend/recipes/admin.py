@@ -1,12 +1,16 @@
 import webcolors
 from django.contrib import admin
+from django.utils.safestring import mark_safe  
 
+from foodgram.constant import (MIN_VALUE_IGRREDIENTS_ADMIN, RECIPE_LIMIT_SHOW, 
+                               NO_VALUE)
 from .models import (FavoriteRecipe, Ingredient, Recipe,
                      RecipeIngredient, ShoppingCart, Tag)
-from .forms import TagForm
 
-RECIPE_LIMIT_SHOW = 5
-admin.site.empty_value_display = '-Не задано-'
+
+
+
+admin.site.empty_value_display = NO_VALUE
 
 
 class RecipeIngredientAdmin(admin.StackedInline):
@@ -14,6 +18,7 @@ class RecipeIngredientAdmin(admin.StackedInline):
 
     model = RecipeIngredient
     autocomplete_fields = ('ingredient',)
+    min_num = MIN_VALUE_IGRREDIENTS_ADMIN
 
 
 @admin.register(Recipe)
@@ -21,7 +26,7 @@ class RecipeAdmin(admin.ModelAdmin):
     """Административная панель Рецептов."""
 
     list_display = (
-        'id', 'get_author', 'name', 'text',
+        'id', 'get_image', 'get_author', 'name', 'text',
         'cooking_time', 'get_tags', 'get_ingredients',
         'pub_date', 'get_favorite_count',
     )
@@ -44,7 +49,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description=' Ингредиенты ')
     def get_ingredients(self, obj):
-        return '\n '.join([
+        return ', '.join([
             f'{item["ingredient__name"]} - {item["amount"]}'
             f' {item["ingredient__measurement_unit"]}.'
             for item in obj.recipe.values(
@@ -54,13 +59,19 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description='В избранном')
     def get_favorite_count(self, obj):
         return obj.favorite_recipe.count()
+    
+    @admin.display(description='Изображение')
+    def get_image(self, obj):
+        if obj.image:
+            return mark_safe(f'<img src="{obj.image.url}" width="80" height="60">')
+        return f'{NO_VALUE}'
+
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     """Административная панель Тэгов."""
 
-    form = TagForm
     list_display = (
         'id', 'name', 'color_name',
         'color', 'slug',

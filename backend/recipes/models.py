@@ -4,7 +4,7 @@ from django.db import models
 from colorfield.fields import ColorField
 
 from users.models import User
-from foodgram.constant import (MAX_LENGTH_CHAR_FIELD, MAX_LENGTH_COLOR,
+from foodgram.constant import (MAX_LENGTH_CHAR_FIELD, COLOR_PALETTE,
                                MIN_VALUE_TIME, MAX_VALUE_TIME,
                                MIN_VALUE_AMOUNT, MAX_VALUE_AMOUNT,)
 
@@ -45,7 +45,8 @@ class Tag(models.Model):
     )
     color = ColorField(
         'Цвет',
-        max_length=MAX_LENGTH_COLOR,
+        format='hex',
+        samples=COLOR_PALETTE,
     )
     slug = models.SlugField(
         'Ссылка',
