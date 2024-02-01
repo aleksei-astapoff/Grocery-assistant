@@ -29,10 +29,3 @@ MIN_VALUE_IGRREDIENTS_ADMIN = 1
 RECIPE_LIMIT_SHOW = 5
 NO_VALUE = '-Не задано-'
 
-# recipes management/commands/load_data
-
-data = (
-    {'name': 'Завтрак', 'color': '#FF0000', 'slug': 'breakfast'},
-    {'name': 'Обед', 'color': '#00FF00', 'slug': 'lunch'},
-    {'name': 'Ужин', 'color': '#0000FF', 'slug': 'dinner'},
-)

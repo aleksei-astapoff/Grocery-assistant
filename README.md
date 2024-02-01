@@ -81,7 +81,7 @@ python manage.py runserver
 docker-compose up
 docker compose exec backend python manage.py migrate
 docker compose exec backend python manage.py foodgramsuperuser
-docker compose exec backend python manage.py load_ingredients
+docker compose exec backend python manage.py load_data
 docker compose exec backend python manage.py collectstatic
 ```
 
