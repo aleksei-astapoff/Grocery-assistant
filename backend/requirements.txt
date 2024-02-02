@@ -15,3 +15,5 @@ python-dotenv==1.0.0
 djoser==2.2.0
 urllib3==1.26.18
 webcolors==1.11.1
+django-colorfield==10.0.0
+drf-extra-fields==3.7.0
