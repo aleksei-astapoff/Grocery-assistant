@@ -16,7 +16,9 @@ class Command(BaseCommand):
         ingredient_file_path = f'{settings.BASE_DIR}/data/ingredients.csv'
         tag_file_path = f'{settings.BASE_DIR}/data/tags.csv'
         try:
-            with open(ingredient_file_path, 'r', encoding='utf-8') as ingredient_file:
+            with open(
+                ingredient_file_path, 'r', encoding='utf-8'
+            ) as ingredient_file:
                 reader = csv.reader(ingredient_file)
                 for row in reader:
                     name, measurement_unit = row
@@ -40,5 +42,6 @@ class Command(BaseCommand):
                 'Один из файлов не найден. провеьте, что оба файла существуют.'
             ))
         except Exception as exc:
-            self.stdout.write(self.style.ERROR(f'Произошла ошибка: {str(exc)}'))
-
+            self.stdout.write(
+                self.style.ERROR(f'Произошла ошибка: {str(exc)}')
+            )

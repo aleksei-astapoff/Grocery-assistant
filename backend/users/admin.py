@@ -41,12 +41,12 @@ class FoodgramUserAdmin(UserAdmin):
 
     def get_recipe_count(self, obj):
         return obj.recipe.count()
-    
+
     get_recipe_count.short_description = 'Количество рецептов'
 
     def get_follower_count(self, obj):
         return obj.follower.count()
-    
+
     get_follower_count.short_description = 'Количество подписчиков'
 
 

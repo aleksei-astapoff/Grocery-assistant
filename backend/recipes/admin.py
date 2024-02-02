@@ -1,13 +1,11 @@
 import webcolors
 from django.contrib import admin
-from django.utils.safestring import mark_safe  
+from django.utils.safestring import mark_safe
 
-from foodgram.constant import (MIN_VALUE_IGRREDIENTS_ADMIN, RECIPE_LIMIT_SHOW, 
+from foodgram.constant import (MIN_VALUE_IGRREDIENTS_ADMIN, RECIPE_LIMIT_SHOW,
                                NO_VALUE)
 from .models import (FavoriteRecipe, Ingredient, Recipe,
                      RecipeIngredient, ShoppingCart, Tag)
-
-
 
 
 admin.site.empty_value_display = NO_VALUE
@@ -59,13 +57,14 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description='В избранном')
     def get_favorite_count(self, obj):
         return obj.favorite_recipe.count()
-    
+
     @admin.display(description='Изображение')
     def get_image(self, obj):
         if obj.image:
-            return mark_safe(f'<img src="{obj.image.url}" width="80" height="60">')
+            return mark_safe(
+                f'<img src="{obj.image.url}" width="80" height="60">'
+            )
         return f'{NO_VALUE}'
-
 
 
 @admin.register(Tag)
