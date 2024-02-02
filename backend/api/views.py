@@ -54,8 +54,8 @@ class UsersViewSet(UserViewSet):
 
     @action(detail=True, methods=['post'],
             permission_classes=(IsAuthenticated,))
-    def subscribe(self, request, pk):
-        author = get_object_or_404(User, id=pk)
+    def subscribe(self, request, id):
+        author = get_object_or_404(User, id=id)
         user = request.user
         subscription = Subscribe.objects.filter(user=user, author=author)
         if subscription.exists():
@@ -71,9 +71,9 @@ class UsersViewSet(UserViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
-    def delete_subscribe(self, request, pk):
+    def delete_subscribe(self, request, id):
         print("start")
-        author = get_object_or_404(User, id=pk)
+        author = get_object_or_404(User, id=id)
         print(author)
         user = request.user
         print(user)
