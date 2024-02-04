@@ -11,6 +11,7 @@ class User(AbstractUser):
     """Модель Пользователя."""
 
     USERNAME_FIELD = USERNAME
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name')
 
     email = models.EmailField(
         'Электронная почта',
@@ -36,8 +37,6 @@ class User(AbstractUser):
         validators=[validators.validate_password],
         help_text=('Пароль должен соответствовать требованиям безопасности.'),
     )
-
-    REQUIRED_FIELDS = ('username', 'first_name', 'last_name')
 
     class Meta:
         verbose_name = 'Пользователь'

@@ -29,7 +29,7 @@ class FoodgramUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'fields': ('email', 'password1', 'password2',
-                       'first_name', 'last_name',),
+                       'username', 'first_name', 'last_name',),
         }),
         ('Permissions', {'fields': ('is_staff',)}),
     )
@@ -39,15 +39,13 @@ class FoodgramUserAdmin(UserAdmin):
             obj.set_password(form.cleaned_data['password'])
         super().save_model(request, obj, form, change)
 
+    @admin.display(description='Количество рецептов')
     def get_recipe_count(self, obj):
         return obj.recipe.count()
 
-    get_recipe_count.short_description = 'Количество рецептов'
-
+    @admin.display(description='Количество подписчиков')
     def get_follower_count(self, obj):
         return obj.follower.count()
-
-    get_follower_count.short_description = 'Количество подписчиков'
 
 
 @admin.register(Subscribe)
