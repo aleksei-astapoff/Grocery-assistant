@@ -4,7 +4,6 @@ from django.db.models import BooleanField
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
-from rest_framework.exceptions import ValidationError
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
@@ -17,8 +16,9 @@ from users.models import Subscribe, User
 from .filters import IngredientFilter, RecipeFilter
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, SubscriptionsSerializer,
-                          TagSerializer, ObjectRecipeSerializer,
-                          SubscribeSerializer, CustomUserSerializer,)
+                          TagSerializer, FavoriteSerializer,
+                          ShoppingCartSerializer, SubscribeSerializer,
+                          CustomUserSerializer,)
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .pagination import LimitPagination
 
@@ -101,7 +101,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
                         recipe=OuterRef('id'),
                     ))
             ).order_by('-pub_date')
-            
+
         return queryset
 
     def get_serializer_class(self):
@@ -136,33 +136,50 @@ class RecipesViewSet(viewsets.ModelViewSet):
             'ingredient__name', 'ingredient__measurement_unit'
         ).annotate(amount=Sum('amount')).order_by('ingredient__name')
         return self.create_shopping_list(ingredients)
-    
-    def add_delete_recipe(self, pk, model):
-        user = self.request.user
-        recipe = get_object_or_404(Recipe, pk=pk)
-        storage, created_storage  = model.objects.get_or_create(user=user)
 
-        if self.request.method == 'POST':
-            if storage.recipe.filter(pk=recipe.pk).exists():
-                raise ValidationError(
-                    'Рецепт уже находится в вашем списке.'
-                )
-            storage.recipe.add(recipe)
-            serializer = ObjectRecipeSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    @staticmethod
+    def add_recipe(request, pk, serializers):
+        context = {'request': request}
+        recipe = get_object_or_404(Recipe, id=pk)
+        data = {
+            'user': request.user.id,
+            'recipe': recipe.id
+        }
+        serializer = serializers(data=data, context=context)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if self.request.method == 'DELETE':
-            if storage.recipe.filter(pk=recipe.pk).exists():
-                storage.recipe.remove(recipe)
-                return Response(status=status.HTTP_204_NO_CONTENT)
+    @staticmethod
+    def delete_recipe(request, pk, serializers):
+        get_object_or_404(
+            serializers.Meta.model,
+            user=request.user,
+            recipe=get_object_or_404(Recipe, id=pk)
+        ).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['POST', 'DELETE'], detail=True)
-    def favorite(self, request, pk):
-        return self.add_delete_recipe(pk, FavoriteRecipe)
-
-    @action(methods=['POST', 'DELETE'], detail=True)
+    @action(
+        detail=True,
+        methods=('POST',),
+        permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk):
-        return self.add_delete_recipe(pk, ShoppingCart)
+        return self.add_recipe(request, pk, ShoppingCartSerializer)
+
+    @shopping_cart.mapping.delete
+    def destroy_shopping_cart(self, request, pk):
+        return self.delete_recipe(request, pk, ShoppingCartSerializer)
+
+    @action(
+        detail=True,
+        methods=('POST',),
+        permission_classes=[IsAuthenticated])
+    def favorite(self, request, pk):
+        return self.add_recipe(request, pk, FavoriteSerializer)
+
+    @favorite.mapping.delete
+    def destroy_favorite(self, request, pk):
+        return self.delete_recipe(request, pk, FavoriteSerializer)
 
 
 class TagsViewSet(viewsets.ModelViewSet):

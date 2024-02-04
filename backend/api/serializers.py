@@ -1,10 +1,10 @@
-from django.core.validators import MinValueValidator, MaxValueValidator
-from djoser.serializers import UserCreateSerializer, UserSerializer
+from djoser.serializers import UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from recipes.models import (Ingredient, Recipe, RecipeIngredient,
+                            Tag, FavoriteRecipe, ShoppingCart)
 from users.models import Subscribe, User
 from foodgram.constant import (MIN_VALUE_TIME, MAX_VALUE_TIME,
                                MAX_VALUE_AMOUNT, MIN_VALUE_AMOUNT)
@@ -38,7 +38,6 @@ class CustomUserSerializer(UserSerializer):
         user = self.context['request'].user
         return (user.is_authenticated
                 and user.follower.filter(author=obj).exists())
-
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -126,12 +125,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         read_only_fields = ('author',)
 
     def validate(self, data):
+        print(data)
         if 'ingredients' not in data or not data['ingredients']:
             raise serializers.ValidationError(
                 {'ingredients': 'Нужен хотя бы один ингредиент для рецепта!'}
             )
 
-        ingredient_ids = [item['ingredient'] for item in data['ingredients']]
+        ingredient_ids = [item['id'] for item in data['ingredients']]
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
                 {'ingredients': 'Ингредиенты должны быть уникальными!'}
@@ -152,7 +152,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients_to_create = [
             RecipeIngredient(
                 recipe=recipe,
-                ingredient=ingredient.get('ingredient'),
+                ingredient=ingredient.get('id'),
                 amount=ingredient.get('amount')
             )
             for ingredient in ingredients
@@ -220,6 +220,31 @@ class ObjectRecipeSerializer(serializers.ModelSerializer):
         )
 
 
+class FavoriteSerializer(serializers.ModelSerializer):
+    """Сериализатор добавления/удаления рецепта в избранное."""
+    class Meta:
+        model = FavoriteRecipe
+        fields = ('user', 'recipe')
+
+    def validate(self, data):
+        user, recipe = data.get('user'), data.get('recipe')
+        if self.Meta.model.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError(
+                {'error': 'Этот рецепт уже добавлен'}
+            )
+        return data
+
+    def to_representation(self, instance):
+        context = {'request': self.context.get('request')}
+        return ObjectRecipeSerializer(instance.recipe, context=context).data
+
+
+class ShoppingCartSerializer(FavoriteSerializer):
+    """Сериализатор добавления/удаления рецепта в список покупок."""
+    class Meta(FavoriteSerializer.Meta):
+        model = ShoppingCart
+
+
 class SubscriptionsSerializer(CustomUserSerializer):
     """Сериализатор для обработки подписок."""
     recipes = SerializerMethodField(read_only=True)
@@ -236,12 +261,12 @@ class SubscriptionsSerializer(CustomUserSerializer):
             limit = int(request.GET.get('recipes_limit', 0))
         except ValueError:
             limit = None
-            recipes = obj.recipe.all()[:limit] 
+            recipes = obj.recipe.all()[:limit]
 
-        return ObjectRecipeSerializer(
-            recipes,
-            many=True,
-            context=self.context).data
+            return ObjectRecipeSerializer(
+                recipes,
+                many=True,
+                context=self.context).data
 
     def get_recipes_count(self, obj):
         return obj.recipe.count()
@@ -267,4 +292,3 @@ class SubscribeSerializer(serializers.ModelSerializer):
         author = instance.author
         serializer = SubscriptionsSerializer(author, context=self.context)
         return serializer.data
-    

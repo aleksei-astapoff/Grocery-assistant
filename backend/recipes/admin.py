@@ -104,37 +104,12 @@ class IngredientAdmin(admin.ModelAdmin):
 class FavoriteRecipeAdmin(admin.ModelAdmin):
     """Административная панель Избранных Рецептов Пользователя."""
 
-    list_display = (
-        'id', 'user', 'get_recipe', 'get_count')
-
-    @admin.display(
-        description='Рецепты')
-    def get_recipe(self, obj):
-        return [
-            f'{item["name"]} '
-            for item in obj.recipe.values('name')[:RECIPE_LIMIT_SHOW]
-        ]
-
-    @admin.display(
-        description='В избранных')
-    def get_count(self, obj):
-        return obj.recipe.count()
+    list_display = ('pk', 'user', 'recipe')
 
 
 @admin.register(ShoppingCart)
 class SoppingCartAdmin(admin.ModelAdmin):
     """Административная панель Корзины Пользователя. """
 
-    list_display = (
-        'id', 'user', 'get_recipe', 'get_count')
+    list_display = ('id', 'user', 'recipe')
 
-    @admin.display(description='Рецепты')
-    def get_recipe(self, obj):
-        return [
-            f'{item["name"]} '
-            for item in obj.recipe.values('name')[:RECIPE_LIMIT_SHOW]
-        ]
-
-    @admin.display(description='Корзина')
-    def get_count(self, obj):
-        return obj.recipe.count()

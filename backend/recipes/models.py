@@ -162,15 +162,16 @@ class RecipeIngredient(models.Model):
 class UserRecipeRelation(models.Model):
     """Абстрактная модель для Избранного и Корзины"""
 
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        null=True,
         verbose_name='Пользователь',
+
     )
-    recipe = models.ManyToManyField(
+    recipe = models.ForeignKey(
         Recipe,
-        verbose_name='Рецепт'
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
     )
 
     class Meta:

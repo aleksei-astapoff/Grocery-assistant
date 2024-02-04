@@ -47,8 +47,6 @@ class FoodgramUserAdmin(UserAdmin):
     def get_follower_count(self, obj):
         return obj.follower.count()
 
-   
-
 
 @admin.register(Subscribe)
 class SubscribeAdmin(admin.ModelAdmin):
