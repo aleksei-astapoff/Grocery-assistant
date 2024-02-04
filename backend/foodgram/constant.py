@@ -26,5 +26,4 @@ COLOR_PALETTE = [
 # recipes admin
 
 MIN_VALUE_IGRREDIENTS_ADMIN = 1
-RECIPE_LIMIT_SHOW = 5
 NO_VALUE = '-Не задано-'

@@ -2,7 +2,7 @@ import webcolors
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
-from foodgram.constant import (MIN_VALUE_IGRREDIENTS_ADMIN, RECIPE_LIMIT_SHOW,
+from foodgram.constant import (MIN_VALUE_IGRREDIENTS_ADMIN,
                                NO_VALUE)
 from .models import (FavoriteRecipe, Ingredient, Recipe,
                      RecipeIngredient, ShoppingCart, Tag)
@@ -112,4 +112,3 @@ class SoppingCartAdmin(admin.ModelAdmin):
     """Административная панель Корзины Пользователя. """
 
     list_display = ('id', 'user', 'recipe')
-
