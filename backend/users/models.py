@@ -6,6 +6,7 @@ from django.db import models
 from foodgram.constant import (MAX_LENGTH_EMAIL_FIELD, MAX_LENGTH_CHAR_FIELD,
                                USERNAME,)
 
+
 class User(AbstractUser):
     """Модель Пользователя."""
 
