@@ -125,8 +125,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         read_only_fields = ('author',)
 
     def validate(self, data):
-        print(data)
-        if 'ingredients' not in data or not data['ingredients']:
+        if 'ingredients' not in data:
             raise serializers.ValidationError(
                 {'ingredients': 'Нужен хотя бы один ингредиент для рецепта!'}
             )
@@ -230,13 +229,15 @@ class FavoriteSerializer(serializers.ModelSerializer):
         user, recipe = data.get('user'), data.get('recipe')
         if self.Meta.model.objects.filter(user=user, recipe=recipe).exists():
             raise serializers.ValidationError(
-                {'error': 'Этот рецепт уже добавлен'}
+                {'error':
+                 f'Рецепт уже добавлен в '
+                 f'{self.Meta.model._meta.verbose_name}!'}
             )
         return data
 
     def to_representation(self, instance):
-        context = {'request': self.context.get('request')}
-        return ObjectRecipeSerializer(instance.recipe, context=context).data
+        return ObjectRecipeSerializer(
+            instance.recipe, context=self.context).data
 
 
 class ShoppingCartSerializer(FavoriteSerializer):
@@ -257,16 +258,19 @@ class SubscriptionsSerializer(CustomUserSerializer):
 
     def get_recipes(self, obj):
         request = self.context['request']
+
         try:
             limit = int(request.GET.get('recipes_limit', 0))
+            if limit == 0:
+                raise ValueError
         except ValueError:
             limit = None
-            recipes = obj.recipe.all()[:limit]
-
-            return ObjectRecipeSerializer(
-                recipes,
-                many=True,
-                context=self.context).data
+        print(limit)
+        recipes = obj.recipe.all()[:limit]
+        return ObjectRecipeSerializer(
+            recipes,
+            many=True,
+            context=self.context).data
 
     def get_recipes_count(self, obj):
         return obj.recipe.count()
@@ -275,7 +279,7 @@ class SubscriptionsSerializer(CustomUserSerializer):
 class SubscribeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscribe
-        fields = ['user', 'author']
+        fields = ('user', 'author',)
 
     def validate(self, data):
         if data['user'] == data['author']:
@@ -289,6 +293,5 @@ class SubscribeSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        author = instance.author
-        serializer = SubscriptionsSerializer(author, context=self.context)
-        return serializer.data
+        return SubscriptionsSerializer(
+            instance.author, context=self.context).data

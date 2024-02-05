@@ -59,10 +59,8 @@ class UsersViewSet(UserViewSet):
         data = {'user': request.user.id, 'author': author.id}
         serializer = SubscribeSerializer(data=data,
                                          context={'request': request})
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id):
@@ -72,7 +70,7 @@ class UsersViewSet(UserViewSet):
         if subscription.exists():
             subscription.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response({"errors": "Подписка не найдена."},
+        return Response({'errors': 'Подписка не найдена.'},
                         status=status.HTTP_404_NOT_FOUND)
 
 
@@ -84,10 +82,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Recipe.objects.select_related('author').prefetch_related(
-            'tags', 'ingredients', 'recipe',
-            'shopping_cart', 'favorite_recipe'
-        )
+        queryset = Recipe.objects.select_related('author')
         if user.is_authenticated:
             return queryset.annotate(
                 is_favorited=Exists(
@@ -128,7 +123,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'],
             permission_classes=[IsAuthenticated],)
     def download_shopping_cart(self, request):
-        """Функция выполняющая выгрузку Корзины Пользователя в TXT формате."""
+        """Метод выполняющий выгрузку Корзины Пользователя в TXT формате."""
 
         ingredients = RecipeIngredient.objects.filter(
             recipe__shopping_cart__user=request.user
@@ -140,10 +135,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @staticmethod
     def add_recipe(request, pk, serializers):
         context = {'request': request}
-        recipe = get_object_or_404(Recipe, id=pk)
+        # recipe = get_object_or_404(Recipe, id=pk)
         data = {
             'user': request.user.id,
-            'recipe': recipe.id
+            'recipe': pk
         }
         serializer = serializers(data=data, context=context)
         serializer.is_valid(raise_exception=True)
@@ -152,12 +147,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def delete_recipe(request, pk, serializers):
-        get_object_or_404(
-            serializers.Meta.model,
+        recipe = serializers.Meta.model.objects.filter(
             user=request.user,
-            recipe=get_object_or_404(Recipe, id=pk)
-        ).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            recipe_id=pk
+        )
+        if recipe.exists():
+            recipe.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=True,

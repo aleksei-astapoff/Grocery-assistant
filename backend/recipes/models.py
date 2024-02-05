@@ -26,7 +26,7 @@ class Ingredient(models.Model):
         verbose_name_plural = 'Ингредиенты'
         constraints = (
             models.UniqueConstraint(
-                fields=['name', 'measurement_unit'],
+                fields=('name', 'measurement_unit'),
                 name='unique_ingredient_measurement'
             ),
         )
@@ -153,7 +153,7 @@ class RecipeIngredient(models.Model):
         ordering = ('recipe', 'amount',)
         constraints = (
             models.UniqueConstraint(
-                fields=['recipe', 'ingredient'],
+                fields=('recipe', 'ingredient'),
                 name='unique_ingredient'
             ),
         )
@@ -179,9 +179,8 @@ class UserRecipeRelation(models.Model):
         ordering = ('user',)
 
     def __str__(self):
-        first_recipe = self.recipe.first()
         return (f'Пользователь {self.user} добавил'
-                f' {first_recipe.name if first_recipe else "Нет рецептов"}')
+                f' {self.recipe.name if self.recipe else "Нет рецептов"}')
 
 
 class FavoriteRecipe(UserRecipeRelation):
