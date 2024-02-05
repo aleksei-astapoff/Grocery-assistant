@@ -1,6 +1,9 @@
 ## Описание
 # Продуктовый помощник Foodgram - дипломный проект.
 
+![Foodgram workflow](https://github.com/aleksei-astapoff/foodgram-project-react/actions/workflows/main.yml/badge.svg)
+
+
 Пользователи смогут публиковать рецепты, подписываться на публикации других пользователей, добавлять понравившиеся рецепты в список «Избранное»,скачивать сводный список продуктов
 
 Cайт доступен по ссылке https://duck8000.hopto.org/
