@@ -258,14 +258,11 @@ class SubscriptionsSerializer(CustomUserSerializer):
 
     def get_recipes(self, obj):
         request = self.context['request']
-
         try:
-            limit = int(request.GET.get('recipes_limit', 0))
-            if limit == 0:
-                raise ValueError
-        except ValueError:
+            limit = int(request.GET.get('recipes_limit'))
+        except (TypeError, ValueError):
             limit = None
-        print(limit)
+
         recipes = obj.recipe.all()[:limit]
         return ObjectRecipeSerializer(
             recipes,
