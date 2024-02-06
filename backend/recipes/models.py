@@ -180,7 +180,8 @@ class UserRecipeRelation(models.Model):
 
     def __str__(self):
         return (f'Пользователь {self.user} добавил'
-                f' {self.recipe.name if self.recipe else "Нет рецептов"}')
+                f'{self.user} добавил рецепт {self.recipe.name}'
+                f' в {self._meta.verbose_name}')
 
 
 class FavoriteRecipe(UserRecipeRelation):

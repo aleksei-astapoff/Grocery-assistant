@@ -59,6 +59,7 @@ class UsersViewSet(UserViewSet):
         data = {'user': request.user.id, 'author': author.id}
         serializer = SubscribeSerializer(data=data,
                                          context={'request': request})
+        serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -82,7 +83,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Recipe.objects.select_related('author')
+        queryset = Recipe.objects.select_related('author').prefetch_related(
+            'tags', 'ingredients')
         if user.is_authenticated:
             return queryset.annotate(
                 is_favorited=Exists(
@@ -133,9 +135,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return self.create_shopping_list(ingredients)
 
     @staticmethod
-    def add_recipe(request, pk, serializers):
+    def add_shopping_cart_or_favorite(request, pk, serializers):
         context = {'request': request}
-        # recipe = get_object_or_404(Recipe, id=pk)
         data = {
             'user': request.user.id,
             'recipe': pk
@@ -146,8 +147,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @staticmethod
-    def delete_recipe(request, pk, serializers):
-        recipe = serializers.Meta.model.objects.filter(
+    def delete_shopping_cart_or_favorite(request, pk, model):
+        recipe = model.objects.filter(
             user=request.user,
             recipe_id=pk
         )
@@ -161,22 +162,30 @@ class RecipesViewSet(viewsets.ModelViewSet):
         methods=('POST',),
         permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk):
-        return self.add_recipe(request, pk, ShoppingCartSerializer)
+        return self.add_shopping_cart_or_favorite(
+            request, pk, ShoppingCartSerializer
+        )
 
     @shopping_cart.mapping.delete
     def destroy_shopping_cart(self, request, pk):
-        return self.delete_recipe(request, pk, ShoppingCartSerializer)
+        return self.delete_shopping_cart_or_favorite(
+            request, pk, ShoppingCart
+        )
 
     @action(
         detail=True,
         methods=('POST',),
         permission_classes=[IsAuthenticated])
     def favorite(self, request, pk):
-        return self.add_recipe(request, pk, FavoriteSerializer)
+        return self.add_shopping_cart_or_favorite(
+            request, pk, FavoriteSerializer
+        )
 
     @favorite.mapping.delete
     def destroy_favorite(self, request, pk):
-        return self.delete_recipe(request, pk, FavoriteSerializer)
+        return self.delete_shopping_cart_or_favorite(
+            request, pk, FavoriteRecipe
+        )
 
 
 class TagsViewSet(viewsets.ModelViewSet):
