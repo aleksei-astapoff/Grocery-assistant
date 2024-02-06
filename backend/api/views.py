@@ -155,7 +155,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if recipe.exists():
             recipe.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            data={'errors': 'Рецепт не найден в вашем списке'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @action(
         detail=True,
