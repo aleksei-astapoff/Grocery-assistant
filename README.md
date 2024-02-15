@@ -1,5 +1,5 @@
 ## Описание
-# Продуктовый помощник Foodgram - дипломный проект.
+# Продуктовый помощник Grocery assistant.
 
 ![Foodgram workflow](https://github.com/aleksei-astapoff/foodgram-project-react/actions/workflows/main.yml/badge.svg)
 
